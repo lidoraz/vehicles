@@ -1,4 +1,4 @@
-pandas~=2.0.1
+pandas
 plotly~=5.14.1
 dash~=2.9.3
 requests~=2.30.0
