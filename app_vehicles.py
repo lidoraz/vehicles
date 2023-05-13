@@ -63,7 +63,7 @@ sidebar = html.Div(
                      value="ALL"),
         html.Label("Color by"),
         dcc.RadioItems(['year', 'sub_model'], 'year', id="radio-color", inline=True),
-        html.Label(str(df['date_updated'].max()), style={"direction": "ltr", "margin-top": "300px"})
+        html.Label(df.attrs["date_updated"], style={"direction": "ltr", "margin-top": "300px"})
     ],
 )
 
