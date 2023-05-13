@@ -9,7 +9,7 @@ def download(path=None):
     if os.path.exists(db_path):
         return
     print(f"Downloading file {path}")
-    os.system(f"wget {path}")
+    os.system(f"wget {db_path}")
     print(f"Downloaded file {path}")
 
 
@@ -48,5 +48,5 @@ def get_graph(df_q, model_s, color_by='year'):
     fig = px.scatter(df_q, x='price', y='kilometers', color=color_by, title=f'{oem}, {model_s}',
                      hover_name="hover_s",
                      # template="plotly_dark",
-                     hover_data=["info_text_s", "link"])
+                     hover_data=["hand", "info_text_s", "link"])
     return fig
