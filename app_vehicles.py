@@ -1,4 +1,6 @@
+import dash
 from dash import Dash, html, dcc, Input, Output, State
+import dash_bootstrap_components as dbc
 import webbrowser
 from utils import *
 
@@ -10,6 +12,7 @@ if len(sys.argv) > 1:
 
 # Load data
 df = get_data(path)
+updated_at = df.attrs["date_updated"] if "date_updated" in df.attrs else str(df["date_updated"].max())
 model_cnts = get_counts(df)
 labels = [f'{name[0]} - {name[1]}, כ-{cnts:,.0f}' for name, cnts in model_cnts.items()]
 values = [name[1] for name in model_cnts.index]
@@ -29,8 +32,8 @@ def generate_sub_models(df_q):
         df_q.groupby("sub_model").agg({"year": "max", "model": "size"}).sort_values(by=["year", "model"],
                                                                                     ascending=False)[
             'model']
-    labels = ["הכל"] + [f'{name}  כ-{cnts:,.0f}' for name, cnts in sub_model_cnts.items()]
-    values = ["ALL"] + sub_model_cnts.index.tolist()
+    labels = [f'{name}  כ-{cnts:,.0f}' for name, cnts in sub_model_cnts.items()]
+    values = sub_model_cnts.index.tolist()
     options = [{"label": label, "value": value} for label, value in zip(labels, values)]
     return options
 
@@ -54,16 +57,15 @@ sidebar = html.Div(
             value=selected_model,
             clearable=False,
         ),
-        html.Label("Select a sub - model"),
-        dcc.Dropdown(id="sub-model-dropdown",
-                     options=sub_model_options,
-                     disabled=False,
-                     clearable=False,
-                     multi=False,  # Add multi here
-                     value="ALL"),
         html.Label("Color by"),
         dcc.RadioItems(['year', 'sub_model'], 'year', id="radio-color", inline=True),
-        html.Label(df.attrs["date_updated"], style={"direction": "ltr", "margin-top": "300px"})
+        html.Label("Select a sub-model"),
+        html.Div([dbc.Button("Clear / All", id="sub-model-clear"),
+                  dbc.Checklist(sub_model_options,
+                                value=[x['value'] for x in sub_model_options],
+                                id="sub-model-dropdown")], className="sub-model-cont"),
+        html.Label(updated_at, className="footer-text"),
+        html.Label("", id="graph-link")
     ],
 )
 
@@ -72,7 +74,7 @@ content = html.Div(
     className="content",
     children=[
         dcc.Graph(id="scatter-plot", style={"height": "80vh"}),
-        html.Label(children=[], id="output-text"),
+        html.Label(children="", id="output-text", style=dict(direction="ltr")),
     ],
 )
 
@@ -85,38 +87,54 @@ app.layout = html.Div(
     ],
 )
 
-state = {"prev_model": selected_model}
+state = {"prev_model": selected_model, "clear_n_clicks": 0}
 
 
 # Define callback to update scatter plot
 @app.callback(Output("scatter-plot", "figure"), Output("sub-model-dropdown", "options"),
-              Output("sub-model-dropdown", "value"),
-              [Input("model-dropdown", "value"), Input("sub-model-dropdown", "value"), Input("radio-color", "value")])
-def update_scatter_plot(selected_model, selected_sub_model, color_by):
+              Output("sub-model-dropdown", "value"), Output("sub-model-clear", "n_clicks"),
+              [Input("model-dropdown", "value"),
+               Input("sub-model-dropdown", "value"),
+               Input("radio-color", "value"),
+               Input("sub-model-clear", "n_clicks")
+               ])
+def update_scatter_plot(selected_model, selected_sub_models, color_by, clear_n_clicks):
     df_q = filter_df(selected_model)
     sub_model_options = generate_sub_models(df_q)
-    if selected_sub_model != "ALL":
-        if state['prev_model'] != selected_model:
-            selected_sub_model = "ALL"
+    if clear_n_clicks:
+        if len(selected_sub_models):
+            selected_sub_models = []
         else:
-            df_q = df_q[df_q['sub_model'] == selected_sub_model]
+            selected_sub_models = [x['value'] for x in sub_model_options]
+        return dash.no_update, sub_model_options, selected_sub_models, 0
+
+    dff = df_q[df_q['sub_model'].isin(selected_sub_models)]
+    if len(dff):
+        df_q = dff
+    else:
+        selected_sub_models = [x['value'] for x in sub_model_options]
+
     fig = get_graph(df_q, selected_model, color_by)
     fig.update_layout(margin=dict(l=40, r=40, t=40, b=40))
     fig.update_traces(hoverlabel=dict(align="right"))
     fig.update_traces(marker=dict(size=8, line=dict(width=0.8, color='DarkSlateGrey')),
                       selector=dict(mode='markers'))
     state['prev_model'] = selected_model
-    return fig, sub_model_options, selected_sub_model
+    return fig, sub_model_options, selected_sub_models, 0
 
 
-@app.callback(Output("output-text", "children"), [Input("scatter-plot", "clickData")])
+@app.callback(Output("output-text", "children"), Output("graph-link", "children"), [Input("scatter-plot", "clickData")])
 def click_event(click_data):
     if click_data:
         point = click_data['points'][0]
-        link = point['customdata'][1]
-        webbrowser.open(link)
-        return [str(point)]
-    return []
+        link = point['customdata'][2]
+        # webbrowser.open(link)
+        id_ = link.split('/')[-1]
+        item = df.query(f"id=='{id_}'").squeeze().to_dict()
+        # item = html.Div([[] for k,v in item.items()])
+        item = ""
+        return str(item), html.A("CLICK TO AD", href=link, target="_blank")
+    return "", ""
 
 
 # Run app
