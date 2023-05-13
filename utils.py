@@ -9,7 +9,7 @@ def download(path=None):
     if os.path.exists(db_path):
         return
     print(f"Downloading file {path}")
-    os.system(f"wget {db_path}")
+    os.system(f"wget {path}")
     print(f"Downloaded file {path}")
 
 
