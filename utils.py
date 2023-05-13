@@ -1,22 +1,16 @@
 import pandas as pd
 import plotly.express as px
 
-
-db_path = "df_all.pk"
+db_path = "df_all_min.pk"
 
 
 def download(path=None):
     import os
-    import requests
     if os.path.exists(db_path):
         return
     print(f"Downloading file {path}")
-    res = requests.get(path)
-    if res.ok:
-        with open(db_path, 'wb') as f:
-            f.write(res.content)
-    else:
-        print(f"Could not download url: {path}")
+    os.system(f"wget {path}")
+    print(f"Downloaded file {path}")
 
 
 def get_data(path):
