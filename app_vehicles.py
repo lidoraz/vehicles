@@ -22,17 +22,16 @@ selected_model = random.choice(values[:10])
 
 
 def filter_df(selected_model):
-    df_q = df.query(f"""model == "{selected_model}" and kilometers < 500000 and 1000 < price < 3000000""").copy()
+    df_q = df.query(f"""model == "{selected_model}" and kilometers < 1000000 and 1000 < price < 3000000""").copy()
     return df_q
 
 
 def generate_sub_models(df_q):
     # sub_model_cnts = df_q['sub_model'].value_counts()
     sub_model_cnts = \
-        df_q.groupby("sub_model").agg({"year": "max", "model": "size"}).sort_values(by=["year", "model"],
-                                                                                    ascending=False)[
-            'model']
-    labels = [f'{name}  כ-{cnts:,.0f}' for name, cnts in sub_model_cnts.items()]
+        df_q.groupby("sub_model").agg({"year": "min", "model": "size"}).sort_values(by=["year", "model"],
+                                                                                    ascending=False)
+    labels = [f'{row["year"]} - {name},כ{row["model"]:,.0f}' for name, row in sub_model_cnts.iterrows()]
     values = sub_model_cnts.index.tolist()
     options = [{"label": label, "value": value} for label, value in zip(labels, values)]
     return options
@@ -50,20 +49,21 @@ sidebar = html.Div(
     children=[
         html.H2("Vehicle Explorer"),
         html.Hr(),
-        html.Label("Select a model"),
+        html.H5("Select a model"),
         dcc.Dropdown(
             id="model-dropdown",
             options=[{"label": label, "value": value} for label, value in zip(labels, values)],
             value=selected_model,
             clearable=False,
         ),
-        html.Label("Color by"),
+        html.H5("Color by"),
         dcc.RadioItems(['year', 'sub_model'], 'year', id="radio-color", inline=True),
-        html.Label("Select a sub-model"),
+        html.H5("Select a sub-model"),
         html.Div([dbc.Button("Clear / All", id="sub-model-clear"),
                   dbc.Checklist(sub_model_options,
                                 value=[x['value'] for x in sub_model_options],
                                 id="sub-model-dropdown")], className="sub-model-cont"),
+        html.Small("Year is the start of that model, with counts"),
         html.Label(updated_at, className="footer-text"),
         html.Label("", id="graph-link")
     ],
@@ -139,4 +139,4 @@ def click_event(click_data):
 
 # Run app
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
