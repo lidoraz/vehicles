@@ -5,7 +5,7 @@ body {
     font-family: Arial, sans-serif;
     background-color: #ffffff;
     direction: rtl;
-    overflow: hidden;
+    /*overflow: hidden;*/
 }
 
 /* Container styles */
@@ -65,4 +65,15 @@ body {
 /*}*/
 .VirtualizedSelectOption{
     direction: rtl;
+}
+
+.sub-model-cont{
+    overflow-y: scroll;
+    height: 55%;
+    margin: 5px;
+    font-size: small;
+}
+.footer-text{
+    direction: ltr;
+    /*margin-top: 300px;*/
 }
