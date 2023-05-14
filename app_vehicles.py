@@ -128,7 +128,7 @@ def click_event(click_data):
     if click_data:
         point = click_data['points'][0]
         link = point['customdata'][2]
-        # webbrowser.open(link)
+        webbrowser.open(link)
         id_ = link.split('/')[-1]
         item = df.query(f"id=='{id_}'").squeeze().to_dict()
         # item = html.Div([[] for k,v in item.items()])
