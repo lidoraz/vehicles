@@ -49,6 +49,7 @@ sidebar = html.Div(
     children=[
         html.H2("Vehicle Explorer"),
         html.Hr(),
+        html.Label("", id="graph-link"),
         html.H5("Select a model"),
         dcc.Dropdown(
             id="model-dropdown",
@@ -65,7 +66,6 @@ sidebar = html.Div(
                                 id="sub-model-dropdown")], className="sub-model-cont"),
         html.Small("Year is the start of that model, with counts"),
         html.Label(updated_at, className="footer-text"),
-        html.Label("", id="graph-link")
     ],
 )
 
